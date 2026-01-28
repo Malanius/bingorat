@@ -4,17 +4,23 @@ pub struct App {
     grid_size: usize,
     cells: Vec<Cell>,
     cursor_position: (usize, usize),
+    free_cell: (usize, usize),
 }
 
 impl App {
     pub fn new() -> Self {
-        App {
+        let mut app = App {
             grid_size: 5,
             cells: (0..25)
                 .map(|i| Cell::new(&format!("Cell {}", i + 1)))
                 .collect(),
             cursor_position: (0, 0),
-        }
+            free_cell: (2, 2),
+        };
+
+        // Not sure if this is the best way to do this...
+        app.ensure_free_cell_marked();
+        app
     }
 
     pub fn grid_size(&self) -> usize {
@@ -38,6 +44,19 @@ impl App {
         self.cursor_position = (new_x, new_y);
     }
 
+    fn free_index(&self) -> usize {
+        self.free_cell.1 * self.grid_size + self.free_cell.0
+    }
+
+    fn ensure_free_cell_marked(&mut self) {
+        let free_index = self.free_index();
+        if let Some(free_cell) = self.cells.get_mut(free_index) {
+            if !free_cell.marked() {
+                free_cell.toggle();
+            }
+        }
+    }
+
     fn current_index(&self) -> usize {
         self.cursor_position.1 * self.grid_size + self.cursor_position.0
     }
@@ -47,6 +66,8 @@ impl App {
         if let Some(cell) = self.cells.get_mut(index) {
             cell.toggle();
         }
+
+        self.ensure_free_cell_marked();
     }
 
     pub fn reset(&mut self) {
@@ -106,6 +127,26 @@ mod tests {
         assert!(app.cells()[index].marked());
         app.toggle_current_cell();
         assert!(!app.cells()[index].marked());
+    }
+
+    #[test]
+    fn test_free_cell_always_marked() {
+        let mut app = App::new();
+        let free_index = app.free_index();
+
+        assert!(app.cells()[free_index].marked());
+
+        app.move_cursor(Direction::Right);
+        app.move_cursor(Direction::Down);
+        app.move_cursor(Direction::Right);
+        app.move_cursor(Direction::Down);
+        assert!(app.cursor_position() == app.free_cell);
+
+        assert!(app.cells()[free_index].marked());
+        app.toggle_current_cell();
+        assert!(app.cells()[free_index].marked());
+        app.toggle_current_cell();
+        assert!(app.cells()[free_index].marked());
     }
 
     #[test]

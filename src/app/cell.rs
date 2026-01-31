@@ -10,7 +10,7 @@ impl Cell {
             marked: false,
         }
     }
-    fn label(&self) -> &str {
+    pub fn label(&self) -> &str {
         &self.label
     }
 

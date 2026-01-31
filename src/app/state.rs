@@ -81,6 +81,7 @@ impl App {
                 cell.toggle();
             }
         }
+        self.ensure_free_cell_marked();
         self.cursor_position = (0, 0);
     }
 }

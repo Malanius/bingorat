@@ -2,11 +2,11 @@ use std::vec;
 
 use ratatui::{
     Frame,
-    layout::{Alignment, Constraint, Direction, Flex, Layout, Rect},
+    layout::{Constraint, Direction, Flex, Layout, Rect},
     style::{Color, Style, Stylize},
     symbols::border,
     text::{Line, Text},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
 };
 
 use crate::app::App;
@@ -24,23 +24,24 @@ pub fn ui(frame: &mut Frame, app: &App) {
         "quit ".into(),
     ]);
 
-    let block = Block::bordered()
+    let main_block = Block::bordered()
         .title(title.centered())
         .title_bottom(instructions.centered())
-        .border_set(border::THICK);
+        .border_set(border::THICK)
+        .bg(Color::Black);
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(0), Constraint::Length(4)])
-        .split(block.inner(frame.area()));
+        .constraints([Constraint::Min(0), Constraint::Length(3)])
+        .split(main_block.inner(frame.area()));
 
-    frame.render_widget(block, frame.area());
+    frame.render_widget(main_block, frame.area());
 
     let grid_area = chunks[0];
     render_grid(frame, grid_area, app);
 
-    let label_area = chunks[1];
-    render_cell_label(frame, label_area, app);
+    let label_hint_area = chunks[1];
+    render_current_cell_hint(frame, label_hint_area, app);
 }
 
 pub fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
@@ -64,20 +65,32 @@ pub fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
 
     for (idx, cell_area) in cells.into_iter().enumerate() {
         if let Some(cell) = app.cells().get(idx) {
-            let mut cell_block = Block::default().borders(Borders::ALL);
-            if app.cursor_position() == (idx % app.grid_size(), idx / app.grid_size()) {
-                cell_block = cell_block.border_style(Style::default().fg(Color::Yellow));
-            }
-            let mut cell_paragraph = Paragraph::new(Text::from(cell.label())).block(cell_block);
+            let mut cell_block = Block::default()
+                .borders(Borders::ALL)
+                .border_type(BorderType::QuadrantOutside)
+                .border_style(Style::default().black())
+                .bg(Color::Gray);
+
             if cell.marked() {
-                cell_paragraph = cell_paragraph.style(Style::default().bg(Color::Green));
+                cell_block = cell_block.bg(Color::Green);
             }
+            if app.cursor_position() == (idx % app.grid_size(), idx / app.grid_size()) {
+                cell_block = cell_block
+                    .border_style(Style::default().yellow())
+                    .bg(Color::Yellow);
+            }
+
+            let cell_paragraph = Paragraph::new(Text::from(cell.label()).bold())
+                .block(cell_block)
+                .wrap(Wrap { trim: true })
+                .centered();
+
             frame.render_widget(cell_paragraph, cell_area);
         }
     }
 }
 
-pub fn render_cell_label(frame: &mut Frame, area: Rect, app: &App) {
+pub fn render_current_cell_hint(frame: &mut Frame, area: Rect, app: &App) {
     let current_index: usize = app.current_index();
     let cell = match app.current_cell() {
         Some(c) => c,
@@ -103,7 +116,7 @@ pub fn render_cell_label(frame: &mut Frame, area: Rect, app: &App) {
 
     let label_paragraph = Paragraph::new(Text::from(cell.label()))
         .block(label_block.clone())
-        .alignment(Alignment::Center);
+        .centered();
 
     frame.render_widget(label_block, area);
     frame.render_widget(label_paragraph, area);

@@ -57,8 +57,13 @@ impl App {
         }
     }
 
-    fn current_index(&self) -> usize {
+    pub fn current_index(&self) -> usize {
         self.cursor_position.1 * self.grid_size + self.cursor_position.0
+    }
+
+    pub fn current_cell(&self) -> Option<&Cell> {
+        let index = self.current_index();
+        self.cells.get(index)
     }
 
     pub fn toggle_current_cell(&mut self) {

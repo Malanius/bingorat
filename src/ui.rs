@@ -1,7 +1,8 @@
+use std::vec;
+
 use ratatui::{
     Frame,
-    layout::{Constraint, Direction, Flex, Layout, Rect},
-    macros::{constraint, constraints},
+    layout::{Alignment, Constraint, Direction, Flex, Layout, Rect},
     style::{Color, Style, Stylize},
     symbols::border,
     text::{Line, Text},
@@ -30,19 +31,16 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(0), Constraint::Length(5)])
+        .constraints([Constraint::Min(0), Constraint::Length(4)])
         .split(block.inner(frame.area()));
-
-    let label_block = Block::default()
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::White));
-    let label_area = chunks[1];
-    frame.render_widget(label_block, label_area);
 
     frame.render_widget(block, frame.area());
 
     let grid_area = chunks[0];
     render_grid(frame, grid_area, app);
+
+    let label_area = chunks[1];
+    render_cell_label(frame, label_area, app);
 }
 
 pub fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
@@ -77,4 +75,36 @@ pub fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
             frame.render_widget(cell_paragraph, cell_area);
         }
     }
+}
+
+pub fn render_cell_label(frame: &mut Frame, area: Rect, app: &App) {
+    let current_index: usize = app.current_index();
+    let cell = match app.current_cell() {
+        Some(c) => c,
+        None => return,
+    };
+
+    let title = Line::from(vec![
+        " Current Cell: ".blue().bold(),
+        current_index.yellow().bold(),
+        " (Marked: ".into(),
+        if cell.marked() {
+            "Yes".green().bold()
+        } else {
+            "No".red().bold()
+        },
+        ")".into(),
+    ]);
+
+    let label_block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::White))
+        .title(title.centered());
+
+    let label_paragraph = Paragraph::new(Text::from(cell.label()))
+        .block(label_block.clone())
+        .alignment(Alignment::Center);
+
+    frame.render_widget(label_block, area);
+    frame.render_widget(label_paragraph, area);
 }

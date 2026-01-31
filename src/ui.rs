@@ -123,6 +123,5 @@ fn render_current_cell_hint(frame: &mut Frame, area: Rect, app: &App) {
         .block(label_block.clone())
         .centered();
 
-    frame.render_widget(label_block, area);
     frame.render_widget(label_paragraph, area);
 }

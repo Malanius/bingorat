@@ -1,21 +1,20 @@
-use color_eyre::eyre::Result;
-use std::{error::Error, io};
+use color_eyre::eyre::{Ok, Result};
 
 use ratatui::{
-    DefaultTerminal, Terminal,
-    backend::{Backend, CrosstermBackend},
+    DefaultTerminal,
     crossterm::{
-        event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
-        execute,
-        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+        event::{self, Event, KeyEventKind},
+        terminal::enable_raw_mode,
     },
     init, restore,
 };
 
 use crate::app::App;
+use crate::input::Action;
 use crate::ui::ui;
 
 mod app;
+mod input;
 mod ui;
 
 fn main() -> Result<()> {
@@ -24,8 +23,8 @@ fn main() -> Result<()> {
     enable_raw_mode()?;
     let mut terminal = init();
 
-    let mut app = App::new();
-    let _ = run_app(&mut terminal, &mut app);
+    let app = App::new();
+    let _ = run_app(&mut terminal, app);
 
     restore();
     terminal.show_cursor()?;
@@ -33,17 +32,26 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn run_app(terminal: &mut DefaultTerminal, app: &App) -> Result<()> {
+fn run_app(terminal: &mut DefaultTerminal, mut app: App) -> Result<()> {
     loop {
-        terminal.draw(|f| ui(f, app))?;
+        terminal.draw(|f| ui(f, &app))?;
 
         if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Release {
+            if key.kind == KeyEventKind::Release {
                 continue;
             }
-            match key.code {
-                KeyCode::Char('q') => return Ok(()),
-                _ => {}
+            match Action::from_key(key) {
+                Action::MoveCursor(direction) => {
+                    app.move_cursor(direction);
+                }
+                Action::Toggle => {
+                    app.toggle_current_cell();
+                }
+                Action::Reset => {
+                    app.reset();
+                }
+                Action::Quit => return Ok(()),
+                Action::None => {}
             }
         }
     }

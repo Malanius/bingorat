@@ -82,9 +82,7 @@ fn render_cell(cell: &Cell, selected: bool, cell_area: Rect, frame: &mut Frame) 
         cell_block = cell_block.bg(Color::Green);
     }
     if selected {
-        cell_block = cell_block
-            .border_style(Style::default().yellow())
-            .bg(Color::Yellow);
+        cell_block = cell_block.border_style(Style::default().yellow())
     }
 
     let cell_paragraph = Paragraph::new(Text::from(cell.label()).bold())

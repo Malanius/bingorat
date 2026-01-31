@@ -9,7 +9,7 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, Paragraph, Wrap},
 };
 
-use crate::app::App;
+use crate::app::{App, cell::Cell};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     let title = Line::from(" Bingo of the year ".green().bold());
@@ -44,7 +44,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
     render_current_cell_hint(frame, label_hint_area, app);
 }
 
-pub fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
+fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
     let grid_area_layout = Layout::default()
         .flex(Flex::Center)
         .direction(Direction::Horizontal)
@@ -65,32 +65,37 @@ pub fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
 
     for (idx, cell_area) in cells.into_iter().enumerate() {
         if let Some(cell) = app.cells().get(idx) {
-            let mut cell_block = Block::default()
-                .borders(Borders::ALL)
-                .border_type(BorderType::QuadrantOutside)
-                .border_style(Style::default().black())
-                .bg(Color::Gray);
-
-            if cell.marked() {
-                cell_block = cell_block.bg(Color::Green);
-            }
-            if app.cursor_position() == (idx % app.grid_size(), idx / app.grid_size()) {
-                cell_block = cell_block
-                    .border_style(Style::default().yellow())
-                    .bg(Color::Yellow);
-            }
-
-            let cell_paragraph = Paragraph::new(Text::from(cell.label()).bold())
-                .block(cell_block)
-                .wrap(Wrap { trim: true })
-                .centered();
-
-            frame.render_widget(cell_paragraph, cell_area);
+            let selected = app.cursor_position() == (idx % app.grid_size(), idx / app.grid_size());
+            render_cell(cell, selected, cell_area, frame);
         }
     }
 }
 
-pub fn render_current_cell_hint(frame: &mut Frame, area: Rect, app: &App) {
+fn render_cell(cell: &Cell, selected: bool, cell_area: Rect, frame: &mut Frame) {
+    let mut cell_block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::QuadrantOutside)
+        .border_style(Style::default().black())
+        .bg(Color::Gray);
+
+    if cell.marked() {
+        cell_block = cell_block.bg(Color::Green);
+    }
+    if selected {
+        cell_block = cell_block
+            .border_style(Style::default().yellow())
+            .bg(Color::Yellow);
+    }
+
+    let cell_paragraph = Paragraph::new(Text::from(cell.label()).bold())
+        .block(cell_block)
+        .wrap(Wrap { trim: true })
+        .centered();
+
+    frame.render_widget(cell_paragraph, cell_area);
+}
+
+fn render_current_cell_hint(frame: &mut Frame, area: Rect, app: &App) {
     let current_index: usize = app.current_index();
     let cell = match app.current_cell() {
         Some(c) => c,

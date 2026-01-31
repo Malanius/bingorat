@@ -42,11 +42,11 @@ pub fn ui(frame: &mut Frame, app: &App) {
     frame.render_widget(block, frame.area());
 
     let grid_area = chunks[0];
-    render_grid_ratio(frame, grid_area, app);
+    render_grid(frame, grid_area, app);
 }
 
-pub fn render_grid_ratio(frame: &mut Frame, area: Rect, app: &App) {
-    let chunks = Layout::default()
+pub fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
+    let grid_area_layout = Layout::default()
         .flex(Flex::Center)
         .direction(Direction::Horizontal)
         .constraints([
@@ -55,34 +55,26 @@ pub fn render_grid_ratio(frame: &mut Frame, area: Rect, app: &App) {
             Constraint::Min(0),
         ])
         .split(area);
-    let grid_area = chunks[1];
+    let grid_area = grid_area_layout[1];
 
-    let constraints = [Constraint::Ratio(1, app.grid_size() as u32)];
+    let constraints = [Constraint::Ratio(1, app.grid_size() as u32)].repeat(app.grid_size());
+    let horizontal = Layout::horizontal(constraints.clone());
+    let vertical = Layout::vertical(constraints.clone());
 
-    let rows = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(constraints.clone().repeat(app.grid_size()))
-        .split(grid_area);
+    let rows = vertical.split(grid_area);
+    let cells = rows.iter().flat_map(|&row| horizontal.split(row).to_vec());
 
-    for (row_idx, row_area) in rows.iter().enumerate() {
-        let cols = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(constraints.clone().repeat(app.grid_size()))
-            .split(*row_area);
-
-        for (col_idx, col_area) in cols.iter().enumerate() {
-            let index = row_idx * app.grid_size() + col_idx;
-            if let Some(cell) = app.cells().get(index) {
-                let mut cell_block = Block::default().borders(Borders::ALL);
-                if app.cursor_position() == (col_idx, row_idx) {
-                    cell_block = cell_block.border_style(Style::default().fg(Color::Yellow));
-                }
-                let mut cell_paragraph = Paragraph::new(Text::from(cell.label())).block(cell_block);
-                if cell.marked() {
-                    cell_paragraph = cell_paragraph.style(Style::default().bg(Color::Green));
-                }
-                frame.render_widget(cell_paragraph, *col_area);
+    for (idx, cell_area) in cells.into_iter().enumerate() {
+        if let Some(cell) = app.cells().get(idx) {
+            let mut cell_block = Block::default().borders(Borders::ALL);
+            if app.cursor_position() == (idx % app.grid_size(), idx / app.grid_size()) {
+                cell_block = cell_block.border_style(Style::default().fg(Color::Yellow));
             }
+            let mut cell_paragraph = Paragraph::new(Text::from(cell.label())).block(cell_block);
+            if cell.marked() {
+                cell_paragraph = cell_paragraph.style(Style::default().bg(Color::Green));
+            }
+            frame.render_widget(cell_paragraph, cell_area);
         }
     }
 }

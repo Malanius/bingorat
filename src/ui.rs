@@ -6,7 +6,7 @@ use ratatui::{
     style::{Color, Style, Stylize},
     symbols::border,
     text::{Line, Text},
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
 };
 
 use crate::app::{App, cell::Cell};
@@ -42,6 +42,10 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
     let label_hint_area = chunks[1];
     render_current_cell_hint(frame, label_hint_area, app);
+
+    if app.game_won() {
+        render_game_won_popup(frame);
+    }
 }
 
 fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
@@ -128,4 +132,53 @@ fn render_current_cell_hint(frame: &mut Frame, area: Rect, app: &App) {
         .centered();
 
     frame.render_widget(label_paragraph, area);
+}
+
+/// helper function to create a centered rect using up certain percentage of the available rect `r`
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    // Cut the given rectangle into three vertical pieces
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
+        .split(r);
+
+    // Then cut the middle vertical piece into three width-wise pieces
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(popup_layout[1])[1] // Return the middle chunk
+}
+
+fn render_game_won_popup(frame: &mut Frame) {
+    let popup_area = centered_rect(60, 20, frame.area());
+
+    let title = Line::from(" You won! 🎉 ".green().bold());
+    let instructions = Line::from(vec![
+        " <R> ".blue().bold(),
+        "reset ━━".into(),
+        " <Q> ".blue().bold(),
+        "quit ".into(),
+    ]);
+
+    let popup_block = Block::bordered()
+        .title(title.centered())
+        .title_bottom(instructions.centered())
+        .border_set(border::THICK)
+        .bg(Color::Black);
+
+    let paragraph = Paragraph::new(Text::from("Congratulations on completing your Bingo!"))
+        .block(popup_block.clone())
+        .wrap(Wrap { trim: true })
+        .centered();
+
+    frame.render_widget(Clear, popup_area);
+    frame.render_widget(paragraph, popup_area);
 }

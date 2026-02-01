@@ -179,6 +179,11 @@ fn render_game_won_popup(frame: &mut Frame) {
         .wrap(Wrap { trim: true })
         .centered();
 
+    let popup_fade = Block::default()
+        .dim()
+        .borders(Borders::ALL)
+        .border_set(border::THICK);
+
     frame.render_widget(popup_fade, frame.area());
     frame.render_widget(Clear, popup_area);
     frame.render_widget(paragraph, popup_area);

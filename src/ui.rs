@@ -13,16 +13,7 @@ use crate::app::{App, cell::Cell};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     let title = Line::from(" Bingo of the year ".green().bold());
-    let instructions = Line::from(vec![
-        " ←↑↓→/hjkl ".blue().bold(),
-        "move ━━".into(),
-        " <Space/Enter> ".blue().bold(),
-        "toggle ━━".into(),
-        " <R> ".blue().bold(),
-        "reset ━━".into(),
-        " <Q> ".blue().bold(),
-        "quit ".into(),
-    ]);
+    let instructions = instructions_line(app.game_won());
 
     let main_block = Block::bordered()
         .title(title.centered())
@@ -46,6 +37,26 @@ pub fn ui(frame: &mut Frame, app: &App) {
     if app.game_won() {
         render_game_won_popup(frame);
     }
+}
+
+fn instructions_line(game_won: bool) -> Line<'static> {
+    let game = vec![
+        " ←↑↓→/hjkl ".blue().bold(),
+        "move ━━".into(),
+        " <Space/Enter> ".blue().bold(),
+        "toggle ━━".into(),
+    ];
+    let global = vec![
+        " <R> ".blue().bold(),
+        "reset ━━".into(),
+        " <Q> ".blue().bold(),
+        "quit ".into(),
+    ];
+
+    if !game_won {
+        return Line::from([game, global].concat());
+    }
+    Line::from(global)
 }
 
 fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
@@ -161,12 +172,7 @@ fn render_game_won_popup(frame: &mut Frame) {
     let popup_area = centered_rect(60, 20, frame.area());
 
     let title = Line::from(" You won! 🎉 ".green().bold());
-    let instructions = Line::from(vec![
-        " <R> ".blue().bold(),
-        "reset ━━".into(),
-        " <Q> ".blue().bold(),
-        "quit ".into(),
-    ]);
+    let instructions = instructions_line(true);
 
     let popup_block = Block::bordered()
         .title(title.centered())
@@ -179,10 +185,7 @@ fn render_game_won_popup(frame: &mut Frame) {
         .wrap(Wrap { trim: true })
         .centered();
 
-    let popup_fade = Block::default()
-        .dim()
-        .borders(Borders::ALL)
-        .border_set(border::THICK);
+    let popup_fade = Block::default().dim();
 
     frame.render_widget(popup_fade, frame.area());
     frame.render_widget(Clear, popup_area);

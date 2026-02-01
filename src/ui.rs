@@ -109,6 +109,12 @@ fn render_current_cell_hint(frame: &mut Frame, area: Rect, app: &App) {
         } else {
             "No".red().bold()
         },
+        " Win".blue().bold(),
+        if app.game_won() {
+            ": Achieved! 🎉".green().bold()
+        } else {
+            ": Incomplete".red().bold()
+        },
         ")".into(),
     ]);
 

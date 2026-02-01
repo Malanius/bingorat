@@ -5,6 +5,7 @@ pub struct App {
     cells: Vec<Cell>,
     cursor_position: (usize, usize),
     free_cell: (usize, usize),
+    game_won: bool,
 }
 
 impl App {
@@ -16,6 +17,7 @@ impl App {
                 .collect(),
             cursor_position: (0, 0),
             free_cell: (2, 2),
+            game_won: false,
         };
 
         // Not sure if this is the best way to do this...
@@ -29,6 +31,10 @@ impl App {
 
     pub fn cells(&self) -> &Vec<Cell> {
         &self.cells
+    }
+
+    pub fn game_won(&self) -> bool {
+        self.game_won
     }
 
     pub fn cursor_position(&self) -> (usize, usize) {
@@ -66,6 +72,29 @@ impl App {
         self.cells.get(index)
     }
 
+    fn won_by_row(&mut self) -> bool {
+        self.cells
+            .chunks(self.grid_size)
+            .any(|row| row.iter().all(|cell| cell.marked()))
+    }
+
+    fn won_by_column(&mut self) -> bool {
+        (0..self.grid_size).any(|col_idx| {
+            self.cells
+                .iter()
+                .skip(col_idx)
+                .step_by(self.grid_size)
+                .all(|cell| cell.marked())
+        })
+    }
+
+    fn check_game_won(&mut self) {
+        let rows_win = self.won_by_row();
+        let cols_win = self.won_by_column();
+
+        self.game_won = rows_win || cols_win;
+    }
+
     pub fn toggle_current_cell(&mut self) {
         let index = self.current_index();
         if let Some(cell) = self.cells.get_mut(index) {
@@ -73,6 +102,7 @@ impl App {
         }
 
         self.ensure_free_cell_marked();
+        self.check_game_won();
     }
 
     pub fn reset(&mut self) {
@@ -162,9 +192,34 @@ mod tests {
         app.move_cursor(Direction::Right);
         app.toggle_current_cell();
         app.reset();
-        for cell in app.cells() {
-            assert!(!cell.marked());
+        let free_index = app.free_index();
+        assert!(app.cells()[free_index].marked());
+        for (i, cell) in app.cells().iter().enumerate() {
+            if i != free_index {
+                assert!(!cell.marked());
+            }
         }
         assert_eq!(app.cursor_position(), (0, 0));
+        assert!(!app.game_won());
+    }
+
+    #[test]
+    fn test_game_won_by_row() {
+        let mut app = App::new();
+        for x in 0..app.grid_size() {
+            app.cursor_position = (x, 0);
+            app.toggle_current_cell();
+        }
+        assert!(app.game_won());
+    }
+
+    #[test]
+    fn test_game_won_by_column() {
+        let mut app = App::new();
+        for y in 0..app.grid_size() {
+            app.cursor_position = (0, y);
+            app.toggle_current_cell();
+        }
+        assert!(app.game_won());
     }
 }

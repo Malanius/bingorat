@@ -24,7 +24,7 @@ fn main() -> Result<()> {
     let mut terminal = init();
 
     let app = App::new();
-    let _ = run_app(&mut terminal, app);
+    run_app(&mut terminal, app)?;
 
     restore();
     terminal.show_cursor()?;
@@ -40,18 +40,20 @@ fn run_app(terminal: &mut DefaultTerminal, mut app: App) -> Result<()> {
             if key.kind == KeyEventKind::Release {
                 continue;
             }
-            match Action::from_key(key) {
-                Action::MoveCursor(direction) => {
-                    app.move_cursor(direction);
+            if app.game_won() {
+                match Action::from_key(key) {
+                    Action::Reset => app.reset(),
+                    Action::Quit => return Ok(()),
+                    _ => {}
                 }
-                Action::Toggle => {
-                    app.toggle_current_cell();
+            } else {
+                match Action::from_key(key) {
+                    Action::MoveCursor(direction) => app.move_cursor(direction),
+                    Action::Toggle => app.toggle_current_cell(),
+                    Action::Reset => app.reset(),
+                    Action::Quit => return Ok(()),
+                    Action::None => {}
                 }
-                Action::Reset => {
-                    app.reset();
-                }
-                Action::Quit => return Ok(()),
-                Action::None => {}
             }
         }
     }

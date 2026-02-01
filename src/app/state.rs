@@ -124,6 +124,7 @@ impl App {
         }
         self.ensure_free_cell_marked();
         self.cursor_position = (0, 0);
+        self.game_won = false;
     }
 }
 
@@ -253,5 +254,17 @@ mod tests {
             app.toggle_current_cell();
         }
         assert!(app.game_won());
+    }
+
+    #[test]
+    fn test_reset_after_win() {
+        let mut app = App::new();
+        for x in 0..app.grid_size() {
+            app.cursor_position = (x, 0);
+            app.toggle_current_cell();
+        }
+        assert!(app.game_won());
+        app.reset();
+        assert!(!app.game_won());
     }
 }

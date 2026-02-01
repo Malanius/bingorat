@@ -88,11 +88,22 @@ impl App {
         })
     }
 
-    fn check_game_won(&mut self) {
-        let rows_win = self.won_by_row();
-        let cols_win = self.won_by_column();
+    fn won_by_diagonal(&mut self) -> bool {
+        let diag1_win = (0..self.grid_size).all(|i| {
+            let index = i * self.grid_size + i;
+            self.cells.get(index).map_or(false, |cell| cell.marked())
+        });
 
-        self.game_won = rows_win || cols_win;
+        let diag2_win = (0..self.grid_size).all(|i| {
+            let index = i * self.grid_size + (self.grid_size - 1 - i);
+            self.cells.get(index).map_or(false, |cell| cell.marked())
+        });
+
+        diag1_win || diag2_win
+    }
+
+    fn check_game_won(&mut self) {
+        self.game_won = self.won_by_row() || self.won_by_column() || self.won_by_diagonal();
     }
 
     pub fn toggle_current_cell(&mut self) {
@@ -218,6 +229,27 @@ mod tests {
         let mut app = App::new();
         for y in 0..app.grid_size() {
             app.cursor_position = (0, y);
+            app.toggle_current_cell();
+        }
+        assert!(app.game_won());
+    }
+
+    #[test]
+    fn test_game_won_by_diagonal_1() {
+        let mut app = App::new();
+        for i in 0..app.grid_size() {
+            app.cursor_position = (i, i);
+            app.toggle_current_cell();
+        }
+        assert!(app.game_won());
+    }
+
+    #[test]
+    fn test_game_won_by_diagonal_2() {
+        let mut app = App::new();
+        let grid_size = app.grid_size();
+        for i in 0..grid_size {
+            app.cursor_position = (grid_size - 1 - i, i);
             app.toggle_current_cell();
         }
         assert!(app.game_won());

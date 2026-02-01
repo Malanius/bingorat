@@ -1,3 +1,4 @@
+#[derive(Debug, Clone)]
 pub struct Cell {
     label: String,
     marked: bool,

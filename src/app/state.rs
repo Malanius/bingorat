@@ -1,6 +1,8 @@
-use crate::app::{cell::Cell, direction::Direction};
+use crate::app::{Bingo, cell::Cell, direction::Direction};
 
 pub struct App {
+    title: String,
+    win_message: String,
     grid_size: usize,
     cells: Vec<Cell>,
     cursor_position: (usize, usize),
@@ -11,6 +13,8 @@ pub struct App {
 impl App {
     pub fn new() -> Self {
         let mut app = App {
+            title: "Default bingo".to_string(),
+            win_message: "You won! 🎉".to_string(),
             grid_size: 5,
             cells: (0..25)
                 .map(|i| Cell::new(&format!("Cell {}", i + 1)))
@@ -23,6 +27,29 @@ impl App {
         // Not sure if this is the best way to do this...
         app.ensure_free_cell_marked();
         app
+    }
+
+    pub fn from(bingo: Bingo) -> Self {
+        let mut app = App {
+            title: bingo.title().to_string(),
+            win_message: bingo.win_message().to_string(),
+            grid_size: bingo.grid_size(),
+            cells: bingo.cells().to_vec(),
+            free_cell: bingo.free_cell(),
+            game_won: false,
+            cursor_position: (0, 0),
+        };
+
+        app.ensure_free_cell_marked();
+        app
+    }
+
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    pub fn win_message(&self) -> &str {
+        &self.win_message
     }
 
     pub fn grid_size(&self) -> usize {
@@ -125,6 +152,12 @@ impl App {
         self.ensure_free_cell_marked();
         self.cursor_position = (0, 0);
         self.game_won = false;
+    }
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

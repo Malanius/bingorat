@@ -12,7 +12,8 @@ use ratatui::{
 use crate::app::{App, cell::Cell};
 
 pub fn ui(frame: &mut Frame, app: &App) {
-    let title = Line::from(" Bingo of the year ".green().bold());
+    let title = format!(" {} ", app.title()).green().bold();
+    let title = Line::from(title);
     let instructions = instructions_line(app.game_won());
 
     let main_block = Block::bordered()
@@ -35,7 +36,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
     render_current_cell_hint(frame, label_hint_area, app);
 
     if app.game_won() {
-        render_game_won_popup(frame);
+        render_game_won_popup(frame, app.win_message());
     }
 }
 
@@ -168,10 +169,10 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1] // Return the middle chunk
 }
 
-fn render_game_won_popup(frame: &mut Frame) {
+fn render_game_won_popup(frame: &mut Frame, win_message: &str) {
     let popup_area = centered_rect(60, 20, frame.area());
 
-    let title = Line::from(" You won! 🎉 ".green().bold());
+    let title = Line::from("  🎉 !BINGO! 🎉 ".green().bold());
     let instructions = instructions_line(true);
 
     let popup_block = Block::bordered()
@@ -180,7 +181,7 @@ fn render_game_won_popup(frame: &mut Frame) {
         .border_set(border::THICK)
         .bg(Color::Black);
 
-    let paragraph = Paragraph::new(Text::from("Congratulations on completing your Bingo!"))
+    let paragraph = Paragraph::new(Text::from(win_message))
         .block(popup_block.clone())
         .wrap(Wrap { trim: true })
         .centered();

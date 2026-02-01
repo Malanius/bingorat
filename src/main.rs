@@ -16,6 +16,7 @@ use crate::ui::ui;
 mod app;
 mod input;
 mod ui;
+mod y2026;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
@@ -23,7 +24,8 @@ fn main() -> Result<()> {
     enable_raw_mode()?;
     let mut terminal = init();
 
-    let app = App::new();
+    let bingo = y2026::get_year_predictions();
+    let app = App::from(bingo);
     run_app(&mut terminal, app)?;
 
     restore();

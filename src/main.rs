@@ -25,7 +25,7 @@ fn main() -> Result<()> {
     let mut terminal = init();
 
     let bingo = y2026::get_year_predictions();
-    let app = App::from(bingo);
+    let app = App::from(&bingo);
     run_app(&mut terminal, app)?;
 
     restore();
@@ -50,7 +50,7 @@ fn run_app(terminal: &mut DefaultTerminal, mut app: App) -> Result<()> {
                 }
             } else {
                 match Action::from_key(key) {
-                    Action::MoveCursor(direction) => app.move_cursor(direction),
+                    Action::MoveCursor(direction) => app.move_cursor(&direction),
                     Action::Toggle => app.toggle_current_cell(),
                     Action::Reset => app.reset(),
                     Action::Quit => return Ok(()),

@@ -29,12 +29,12 @@ impl App {
         app
     }
 
-    pub fn from(bingo: Bingo) -> Self {
+    pub fn from(bingo: &Bingo) -> Self {
         let mut app = App {
             title: bingo.title().to_string(),
             win_message: bingo.win_message().to_string(),
             grid_size: bingo.grid_size(),
-            cells: bingo.cells().to_vec(),
+            cells: bingo.cells().clone(),
             free_cell: bingo.free_cell(),
             game_won: false,
             cursor_position: (0, 0),
@@ -68,12 +68,14 @@ impl App {
         self.cursor_position
     }
 
-    pub fn move_cursor(&mut self, direction: Direction) {
+    pub fn move_cursor(&mut self, direction: &Direction) {
         let (move_x, move_y) = direction.to_vector();
-        let new_x = (self.cursor_position.0 as isize + move_x)
-            .clamp(0, (self.grid_size - 1) as isize) as usize;
-        let new_y = (self.cursor_position.1 as isize + move_y)
-            .clamp(0, (self.grid_size - 1) as isize) as usize;
+        let new_x = (self.cursor_position.0.cast_signed() + move_x)
+            .clamp(0, (self.grid_size - 1).cast_signed())
+            .cast_unsigned();
+        let new_y = (self.cursor_position.1.cast_signed() + move_y)
+            .clamp(0, (self.grid_size - 1).cast_signed())
+            .cast_unsigned();
         self.cursor_position = (new_x, new_y);
     }
 
@@ -83,10 +85,10 @@ impl App {
 
     fn ensure_free_cell_marked(&mut self) {
         let free_index = self.free_index();
-        if let Some(free_cell) = self.cells.get_mut(free_index) {
-            if !free_cell.marked() {
-                free_cell.toggle();
-            }
+        if let Some(free_cell) = self.cells.get_mut(free_index)
+            && !free_cell.marked()
+        {
+            free_cell.toggle();
         }
     }
 
@@ -102,7 +104,7 @@ impl App {
     fn won_by_row(&mut self) -> bool {
         self.cells
             .chunks(self.grid_size)
-            .any(|row| row.iter().all(|cell| cell.marked()))
+            .any(|row| row.iter().all(Cell::marked))
     }
 
     fn won_by_column(&mut self) -> bool {
@@ -111,19 +113,19 @@ impl App {
                 .iter()
                 .skip(col_idx)
                 .step_by(self.grid_size)
-                .all(|cell| cell.marked())
+                .all(Cell::marked)
         })
     }
 
     fn won_by_diagonal(&mut self) -> bool {
         let diag1_win = (0..self.grid_size).all(|i| {
             let index = i * self.grid_size + i;
-            self.cells.get(index).map_or(false, |cell| cell.marked())
+            self.cells.get(index).is_some_and(Cell::marked)
         });
 
         let diag2_win = (0..self.grid_size).all(|i| {
             let index = i * self.grid_size + (self.grid_size - 1 - i);
-            self.cells.get(index).map_or(false, |cell| cell.marked())
+            self.cells.get(index).is_some_and(Cell::marked)
         });
 
         diag1_win || diag2_win
@@ -176,26 +178,26 @@ mod tests {
     #[test]
     fn test_move_cursor() {
         let mut app = App::new();
-        app.move_cursor(Direction::Right);
+        app.move_cursor(&Direction::Right);
         assert_eq!(app.cursor_position(), (1, 0));
-        app.move_cursor(Direction::Down);
+        app.move_cursor(&Direction::Down);
         assert_eq!(app.cursor_position(), (1, 1));
-        app.move_cursor(Direction::Left);
+        app.move_cursor(&Direction::Left);
         assert_eq!(app.cursor_position(), (0, 1));
-        app.move_cursor(Direction::Up);
+        app.move_cursor(&Direction::Up);
         assert_eq!(app.cursor_position(), (0, 0));
 
         // Test boundary conditions
-        app.move_cursor(Direction::Up);
+        app.move_cursor(&Direction::Up);
         assert_eq!(app.cursor_position(), (0, 0));
-        app.move_cursor(Direction::Left);
+        app.move_cursor(&Direction::Left);
         assert_eq!(app.cursor_position(), (0, 0));
         for _ in 0..10 {
-            app.move_cursor(Direction::Down);
+            app.move_cursor(&Direction::Down);
         }
         assert_eq!(app.cursor_position(), (0, 4));
         for _ in 0..10 {
-            app.move_cursor(Direction::Right);
+            app.move_cursor(&Direction::Right);
         }
         assert_eq!(app.cursor_position(), (4, 4));
     }
@@ -217,10 +219,10 @@ mod tests {
 
         assert!(app.cells()[free_index].marked());
 
-        app.move_cursor(Direction::Right);
-        app.move_cursor(Direction::Down);
-        app.move_cursor(Direction::Right);
-        app.move_cursor(Direction::Down);
+        app.move_cursor(&Direction::Right);
+        app.move_cursor(&Direction::Down);
+        app.move_cursor(&Direction::Right);
+        app.move_cursor(&Direction::Down);
         assert!(app.cursor_position() == app.free_cell);
 
         assert!(app.cells()[free_index].marked());
@@ -234,7 +236,7 @@ mod tests {
     fn test_reset() {
         let mut app = App::new();
         app.toggle_current_cell();
-        app.move_cursor(Direction::Right);
+        app.move_cursor(&Direction::Right);
         app.toggle_current_cell();
         app.reset();
         let free_index = app.free_index();

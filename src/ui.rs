@@ -72,6 +72,7 @@ fn render_grid(frame: &mut Frame, area: Rect, app: &App) {
         .split(area);
     let grid_area = grid_area_layout[1];
 
+    #[allow(clippy::cast_possible_truncation, reason="Grid size will never be that large")]
     let constraints = [Constraint::Ratio(1, app.grid_size() as u32)].repeat(app.grid_size());
     let horizontal = Layout::horizontal(constraints.clone());
     let vertical = Layout::vertical(constraints.clone());
@@ -98,7 +99,7 @@ fn render_cell(cell: &Cell, selected: bool, cell_area: Rect, frame: &mut Frame) 
         cell_block = cell_block.bg(Color::Green);
     }
     if selected {
-        cell_block = cell_block.border_style(Style::default().yellow())
+        cell_block = cell_block.border_style(Style::default().yellow());
     }
 
     let cell_paragraph = Paragraph::new(Text::from(cell.label()).bold())
@@ -111,9 +112,8 @@ fn render_cell(cell: &Cell, selected: bool, cell_area: Rect, frame: &mut Frame) 
 
 fn render_current_cell_hint(frame: &mut Frame, area: Rect, app: &App) {
     let current_index: usize = app.current_index();
-    let cell = match app.current_cell() {
-        Some(c) => c,
-        None => return,
+    let Some(cell) = app.current_cell() else {
+        return;
     };
 
     let title = Line::from(vec![

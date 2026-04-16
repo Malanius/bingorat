@@ -1,0 +1,44 @@
+# This is a bingo card definition file for the Bingorat program
+
+# Lines starting with `#` are comments, they will be ignored by the program
+# Empty lines are also ignored, they are just for better readability
+# The file must contain the following fields: size, name, win, and a list of bingo cells
+
+# specifies the bingo size in range 3-5
+size: 5
+
+# name of the bingo, will be shown in the title
+name: Bingo of 2026
+
+# message shown when the user wins
+win: What a fucked up year, huh?
+
+# list of bingo cells
+# must be exactly size^2
+# `-` is unnmarked cell, `*` is marked cell
+- Survelliance enforced on HW level
+- Chat Control gets mandatory
+- UK doubles down on full 1984 and tracks everyone everywhere
+- Trump declares US independence, leaves NATO and UN
+- Unexpected backup of major video streaming service
+- Major game studio officially supports Linux first
+- GPU prices hit over $10k
+- Trump gets Kirked
+- Military conflict triggered by satellite malfunction
+- Country admits election results were AI-assisted
+- Disney+ cancelled due to AI slop
+- WW3 starts
+# FREE cell, if wanted, must be exactly in the middle of the board, i.e. at index size^2/2
+* FREE
+- City loses power for multiple day due to software update
+- Squadron 42 release
+- Nuclear weapon gets lost
+- A typo causes billions in damage
+- Unpatchable vulnerability found in critical software
+- Windows 11 flops, 2026 true year of Linux
+- New pandemic sweeps the world
+- Social media introduces GLOBAL mandatory age verification
+- AI-generated evidence is accepted in court
+- Country replaces entire goverment with AI
+- Half-Life 3 announced
+- China 'temporarily safeguards' Russian strategic assets

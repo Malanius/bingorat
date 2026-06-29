@@ -4,14 +4,14 @@
 # Empty lines are also ignored, they are just for better readability
 # The file must contain the following fields: size, name, win, and a list of bingo cells
 
-# specifies the bingo size in range 3-5
+# specifies the bingo size of 3 or 5
 size: 5
 
 # name of the bingo, will be shown in the title
 title: Bingo of 2026
 
 # message shown when the user wins
-win: What a fucked up year, huh?
+win_message: What a fucked up year, huh?
 
 # list of bingo cells
 # must be exactly size^2

@@ -17,15 +17,14 @@ pub fn parse_predictions(path: &str) -> Bingo {
     let mut cells: Vec<Cell> = Vec::new();
 
     filtered_contents.into_iter().for_each(|line| match line {
-        l if line.starts_with("size:") => size = parse_size(l),
-        l if line.starts_with("name:") => title = parse_string_param(l),
-        l if line.starts_with("win_message:") => win_message = parse_string_param(l),
-        l if line.starts_with('-') => cells.push(parse_cell(l)),
-        l if line.starts_with('*') => cells.push(parse_cell(l)),
+        s if s.starts_with("size:") => size = parse_size(s),
+        t if t.starts_with("title:") => title = parse_string_param(t),
+        w if w.starts_with("win_message:") => win_message = parse_string_param(w),
+        c if c.starts_with('-') || c.starts_with('*') => cells.push(parse_cell(c)),
         _ => {}
     });
 
-    // Free cell always has to be in the middle (ommented as such in the brat file template)
+    // Free cell always has to be in the middle (commented as such in the brat file template)
     let free_cell_index = (size * size) / 2;
     Bingo::new(
         &title,

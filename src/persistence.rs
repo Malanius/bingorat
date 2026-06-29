@@ -12,20 +12,20 @@ pub fn parse_predictions(path: &str) -> Result<Bingo, Error> {
     let mut size: Option<usize> = None;
     let mut cells: Vec<Cell> = Vec::new();
 
-    for (idx, line) in contents.lines().into_iter().enumerate() {
+    for (idx, line) in contents.lines().enumerate() {
         let ln = idx + 1;
         match line {
             s if s.starts_with("size:") => {
-                size = Some(parse_size(s).wrap_err(format!("Line {ln}:"))?)
+                size = Some(parse_size(s).wrap_err(format!("Line {ln}:"))?);
             }
             t if t.starts_with("title:") => {
-                title = Some(parse_string_param(t).wrap_err(format!("Line {ln}:"))?)
+                title = Some(parse_string_param(t).wrap_err(format!("Line {ln}:"))?);
             }
             w if w.starts_with("win_message:") => {
-                win_message = Some(parse_string_param(w).wrap_err(format!("Line {ln}:"))?)
+                win_message = Some(parse_string_param(w).wrap_err(format!("Line {ln}:"))?);
             }
             c if c.starts_with('-') || c.starts_with('*') => {
-                cells.push(parse_cell(c).wrap_err(format!("Line {ln}:"))?)
+                cells.push(parse_cell(c).wrap_err(format!("Line {ln}:"))?);
             }
             _ => {
                 // Ignore comments and anything else not supported
@@ -34,11 +34,11 @@ pub fn parse_predictions(path: &str) -> Result<Bingo, Error> {
     }
 
     let size = size.ok_or_else(|| Error::msg("Size not specified in the input file!"))?;
-    validate_size(&size)?;
+    validate_size(size)?;
     let title = title.ok_or_else(|| Error::msg("Title not specified in the input file!"))?;
     let win_message =
         win_message.ok_or_else(|| Error::msg("Win message not specified in the input file!"))?;
-    validate_cells(&cells, &size)?;
+    validate_cells(&cells, size)?;
 
     // Free cell always has to be in the middle (commented as such in the brat file template)
     let free_cell_index = (size * size) / 2;
@@ -85,16 +85,16 @@ fn parse_cell(cell_line: &str) -> Result<Cell, Error> {
         })
 }
 
-fn validate_size(size: &usize) -> Result<(), Error> {
+fn validate_size(size: usize) -> Result<(), Error> {
     // So far we only support 3 or 5 to properly fit into terminal, other sizes maybe some other day
-    if !(*size == 3 || *size == 5) {
-        Err(Error::msg("Size must be either 3 or 5!"))
-    } else {
+    if size == 3 || size == 5 {
         Ok(())
+    } else {
+        Err(Error::msg("Size must be either 3 or 5!"))
     }
 }
 
-fn validate_cells(cells: &Vec<Cell>, size: &usize) -> Result<(), Error> {
+fn validate_cells(cells: &[Cell], size: usize) -> Result<(), Error> {
     // Check we have correct nubmer of cells for specified grid size
     if cells.len() != size * size {
         return Err(Error::msg(format!(
@@ -103,7 +103,7 @@ fn validate_cells(cells: &Vec<Cell>, size: &usize) -> Result<(), Error> {
             size,
             size
         )));
-    };
+    }
 
     // Check that free cell is in the middle
     let free_cell_index = (size * size) / 2;
@@ -115,8 +115,7 @@ fn validate_cells(cells: &Vec<Cell>, size: &usize) -> Result<(), Error> {
     let free_cell_count = cells.iter().filter(|c| c.label() == "FREE").count();
     if free_cell_count != 1 {
         return Err(Error::msg(format!(
-            "There must be exactly one FREE cell, found {}!",
-            free_cell_count
+            "There must be exactly one FREE cell, found {free_cell_count}!"
         )));
     }
 
@@ -126,6 +125,7 @@ fn validate_cells(cells: &Vec<Cell>, size: &usize) -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fmt::Write;
 
     // ===== parse_size tests =====
 
@@ -229,17 +229,17 @@ mod tests {
 
     #[test]
     fn test_validate_size_valid() {
-        assert!(validate_size(&3).is_ok());
-        assert!(validate_size(&5).is_ok());
+        assert!(validate_size(3).is_ok());
+        assert!(validate_size(5).is_ok());
     }
 
     #[test]
     fn test_validate_size_invalid() {
-        assert!(validate_size(&1).is_err());
-        assert!(validate_size(&2).is_err());
-        assert!(validate_size(&4).is_err());
-        assert!(validate_size(&7).is_err());
-        assert!(validate_size(&0).is_err());
+        assert!(validate_size(1).is_err());
+        assert!(validate_size(2).is_err());
+        assert!(validate_size(4).is_err());
+        assert!(validate_size(7).is_err());
+        assert!(validate_size(0).is_err());
     }
 
     // ===== validate_cells tests =====
@@ -251,10 +251,10 @@ mod tests {
             if i == 4 {
                 cells.push(Cell::new("FREE"));
             } else {
-                cells.push(Cell::new(&format!("Cell {}", i)));
+                cells.push(Cell::new(&format!("Cell {i}")));
             }
         }
-        assert!(validate_cells(&cells, &3).is_ok());
+        assert!(validate_cells(&cells, 3).is_ok());
     }
 
     #[test]
@@ -264,25 +264,25 @@ mod tests {
             if i == 12 {
                 cells.push(Cell::new("FREE"));
             } else {
-                cells.push(Cell::new(&format!("Cell {}", i)));
+                cells.push(Cell::new(&format!("Cell {i}")));
             }
         }
-        assert!(validate_cells(&cells, &5).is_ok());
+        assert!(validate_cells(&cells, 5).is_ok());
     }
 
     #[test]
     fn test_validate_cells_incorrect_count() {
         let cells = vec![Cell::new("Cell 1"), Cell::new("Cell 2")];
-        assert!(validate_cells(&cells, &3).is_err());
+        assert!(validate_cells(&cells, 3).is_err());
     }
 
     #[test]
     fn test_validate_cells_missing_free_cell() {
         let mut cells = Vec::new();
         for i in 0..9 {
-            cells.push(Cell::new(&format!("Cell {}", i)));
+            cells.push(Cell::new(&format!("Cell {i}")));
         }
-        assert!(validate_cells(&cells, &3).is_err());
+        assert!(validate_cells(&cells, 3).is_err());
     }
 
     #[test]
@@ -292,10 +292,10 @@ mod tests {
             if i == 0 {
                 cells.push(Cell::new("FREE"));
             } else {
-                cells.push(Cell::new(&format!("Cell {}", i)));
+                cells.push(Cell::new(&format!("Cell {i}")));
             }
         }
-        assert!(validate_cells(&cells, &3).is_err());
+        assert!(validate_cells(&cells, 3).is_err());
     }
 
     #[test]
@@ -305,10 +305,10 @@ mod tests {
             if i == 4 {
                 cells.push(Cell::new("NotFree"));
             } else {
-                cells.push(Cell::new(&format!("Cell {}", i)));
+                cells.push(Cell::new(&format!("Cell {i}")));
             }
         }
-        assert!(validate_cells(&cells, &3).is_err());
+        assert!(validate_cells(&cells, 3).is_err());
     }
 
     #[test]
@@ -318,10 +318,10 @@ mod tests {
             if i == 1 || i == 4 {
                 cells.push(Cell::new("FREE"));
             } else {
-                cells.push(Cell::new(&format!("Cell {}", i)));
+                cells.push(Cell::new(&format!("Cell {i}")));
             }
         }
-        assert!(validate_cells(&cells, &3).is_err());
+        assert!(validate_cells(&cells, 3).is_err());
     }
 
     // ===== Integration tests =====
@@ -366,7 +366,7 @@ mod tests {
             if i == 12 {
                 content.push_str("* FREE\n");
             } else {
-                content.push_str(&format!("- Prediction {}\n", i + 1));
+                let _ = writeln!(content, "- Prediction {}", i + 1);
             }
         }
 

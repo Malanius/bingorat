@@ -111,6 +111,15 @@ fn validate_cells(cells: &Vec<Cell>, size: &usize) -> Result<(), Error> {
         return Err(Error::msg("Free cell is not in the middle of the grid!"));
     }
 
+    // Check exactly one FREE cell
+    let free_cell_count = cells.iter().filter(|c| c.label() == "FREE").count();
+    if free_cell_count != 1 {
+        return Err(Error::msg(format!(
+            "There must be exactly one FREE cell, found {}!",
+            free_cell_count
+        )));
+    }
+
     Ok(())
 }
 
@@ -295,6 +304,19 @@ mod tests {
         for i in 0..9 {
             if i == 4 {
                 cells.push(Cell::new("NotFree"));
+            } else {
+                cells.push(Cell::new(&format!("Cell {}", i)));
+            }
+        }
+        assert!(validate_cells(&cells, &3).is_err());
+    }
+
+    #[test]
+    fn test_validate_cells_multiple_free_cells() {
+        let mut cells = Vec::new();
+        for i in 0..9 {
+            if i == 1 || i == 4 {
+                cells.push(Cell::new("FREE"));
             } else {
                 cells.push(Cell::new(&format!("Cell {}", i)));
             }

@@ -16,7 +16,6 @@ use crate::ui::ui;
 mod app;
 mod input;
 mod ui;
-mod y2026;
 mod persistence;
 
 fn main() -> Result<()> {

@@ -47,7 +47,7 @@ fn parse_size(size_line: &str) -> usize {
 }
 
 fn parse_string_param(param_line: &str) -> String {
-    param_line.split(':').nth(1).unwrap().trim().to_string()
+    param_line.split_once(':').unwrap().1.trim().to_string()
 }
 
 fn parse_cell(cell_line: &str) -> Cell {

@@ -23,7 +23,7 @@ fn main() -> Result<()> {
     color_eyre::install()?;
 
     // let bingo = y2026::get_year_predictions();
-    let bingo = persistence::parse_predictions("2026-predictions.brat");
+    let bingo = persistence::parse_predictions("2026-predictions.brat")?;
     enable_raw_mode()?;
     let mut terminal = init();
 

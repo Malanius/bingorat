@@ -11,6 +11,7 @@ impl Cell {
             marked: false,
         }
     }
+
     pub fn label(&self) -> &str {
         &self.label
     }

@@ -17,14 +17,16 @@ mod app;
 mod input;
 mod ui;
 mod y2026;
+mod persistence;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
 
+    // let bingo = y2026::get_year_predictions();
+    let bingo = persistence::parse_predictions("2026-predictions.brat");
     enable_raw_mode()?;
     let mut terminal = init();
 
-    let bingo = y2026::get_year_predictions();
     let app = App::from(&bingo);
     run_app(&mut terminal, app)?;
 
